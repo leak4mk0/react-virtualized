@@ -262,4 +262,45 @@ describe('CellMeasurer', () => {
     expect(node.style.height).toBe('30px');
     expect(node.style.width).toBe('100px');
   });
+
+  it('should measure width/height considering margins if margins option is enabled', () => {
+    mockClientWidthAndHeight({height: 20, width: 100});
+
+    const cache = new CellMeasurerCache({
+      fixedWidth: true,
+    });
+    const parent = createParent({cache});
+    const child = jest.fn().mockReturnValue(
+      <div
+        style={{
+          marginTop: 1,
+          marginBottom: 2,
+          marginLeft: 3,
+          marginRight: 4,
+        }}
+      />,
+    );
+
+    let measurer;
+    const node = findDOMNode(
+      render(
+        <CellMeasurer
+          ref={ref => {
+            measurer = ref;
+          }}
+          cache={cache}
+          columnIndex={0}
+          enableMargins
+          parent={parent}
+          rowIndex={0}
+          style={{}}>
+          {child}
+        </CellMeasurer>,
+      ),
+    );
+
+    const {height, width} = measurer._getCellMeasurements(node);
+    expect(height).toBe(20 + 1 + 2);
+    expect(width).toBe(100 + 3 + 4);
+  });
 });

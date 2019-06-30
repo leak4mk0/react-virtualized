@@ -14,6 +14,7 @@ type Props = {
   cache: CellMeasureCache,
   children: Children | React.Element<*>,
   columnIndex?: number,
+  enableMargins?: boolean,
   index?: number,
   parent: {
     invalidateCellSizeAfterRender?: (cell: Cell) => void,
@@ -47,7 +48,7 @@ export default class CellMeasurer extends React.PureComponent<Props> {
   }
 
   _getCellMeasurements() {
-    const {cache} = this.props;
+    const {cache, enableMargins} = this.props;
 
     const node = findDOMNode(this);
 
@@ -78,8 +79,29 @@ export default class CellMeasurer extends React.PureComponent<Props> {
         node.style.height = 'auto';
       }
 
-      const height = Math.ceil(node.offsetHeight);
-      const width = Math.ceil(node.offsetWidth);
+      let heightOffset = 0;
+      let widthOffset = 0;
+
+      if (enableMargins) {
+        const computedStyle = getComputedStyle(node);
+        const marginLeft = parseFloat(
+          computedStyle.getPropertyValue('margin-left'),
+        );
+        const marginRight = parseFloat(
+          computedStyle.getPropertyValue('margin-right'),
+        );
+        const marginTop = parseFloat(
+          computedStyle.getPropertyValue('margin-top'),
+        );
+        const marginBottom = parseFloat(
+          computedStyle.getPropertyValue('margin-bottom'),
+        );
+        heightOffset += marginTop + marginBottom;
+        widthOffset += marginLeft + marginRight;
+      }
+
+      const height = Math.ceil(node.offsetHeight + heightOffset);
+      const width = Math.ceil(node.offsetWidth + widthOffset);
 
       // Reset after measuring to avoid breaking styles; see #660
       if (styleWidth) {
